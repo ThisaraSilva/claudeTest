@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AuraFocus — Study Timer Clock</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@500;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg-color: #f4f6f8;
+      --card-bg: #ffffff;
+      --text-primary: #1e293b;
+      --text-secondary: #64748b;
+      --accent: #3b82f6;
+      --accent-hover: #2563eb;
+      --accent-soft: rgba(59, 130, 246, 0.12);
+      --ring-track: #e2e8f0;
+      --border-color: #e2e8f0;
+      --shadow: 0 20px 40px -15px rgba(15, 23, 42, 0.08);
+    }
+
+    [data-theme="dark"] {
+      --bg-color: #0f172a;
+      --card-bg: #1e293b;
+      --text-primary: #f8fafc;
+      --text-secondary: #94a3b8;
+      --accent: #60a5fa;
+      --accent-hover: #3b82f6;
+      --accent-soft: rgba(96, 165, 250, 0.15);
+      --ring-track: #334155;
+      --border-color: #334155;
+      --shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.45);
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+      transition: background-color 0.3s ease, color 0.3s ease;
+    }
+
+    .app-container {
+      background-color: var(--card-bg);
+      width: 100%;
+      max-width: 440px;
+      border-radius: 24px;
+      padding: 2rem;
+      box-shadow: var(--shadow);
+      border: 1px solid var(--border-color);
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+
+    header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 600;
+      font-size: 1.1rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background-color: var(--accent);
+    }
+
+    .header-controls {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    .icon-btn {
+      background: transparent;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      width: 36px;
+      height: 36px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .icon-btn:hover {
+      color: var(--text-primary);
+      background-color: var(--accent-soft);
+      border-color: var(--accent);
+    }
+
+    .mode-tabs {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.4rem;
+      background-color: var(--bg-color);
+      padding: 0.35rem;
+      border-radius: 14px;
+      margin-bottom: 1.75rem;
+    }
+
+    .mode-btn {
+      background: transparent;
+      border: none;
+      padding: 0.55rem 0.25rem;
+      border-radius: 10px;
+      font-family: inherit;
+      font-size: 0.8rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .mode-btn.active {
+      background-color: var(--card-bg);
+      color: var(--text-primary);
+      font-weight: 600;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    }
+
+    .custom-input-row {
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-bottom: 1.25rem;
+    }
+
+    .custom-input-row.visible {
+      display: flex;
+    }
+
+    .custom-input-row input {
+      width: 80px;
+      padding: 0.45rem 0.6rem;
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.95rem;
+      text-align: center;
+      outline: none;
+    }
+
+    .custom-input-row input:focus {
+      border-color: var(--accent);
+    }
+
+    .custom-input-row button {
+      padding: 0.45rem 0.9rem;
+      border-radius: 10px;
+      border: none;
+      background-color: var(--accent);
+      color: #fff;
+      font-weight: 500;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+
+    .timer-wrapper {
+      position: relative;
+      width: 250px;
+      height: 250px;
+      margin: 0 auto 1.75rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .progress-ring {
+      position: absolute;
+      top: 0;
+      left: 0;
+      transform: rotate(-90deg);
+    }
+
+    .progress-ring__track {
+      stroke: var(--ring-track);
+      transition: stroke 0.3s ease;
+    }
+
+    .progress-ring__circle {
+      stroke: var(--accent);
+      stroke-linecap: round;
+      transition: stroke-dashoffset 0.35s linear, stroke 0.3s ease;
+    }
+
+    .timer-center {
+      text-align: center;
+      z-index: 1;
+    }
+
+    .time-display {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 3.35rem;
+      font-weight: 700;
+      font-variant-numeric: tabular-nums;
+      letter-spacing: -0.03em;
+      line-height: 1;
+      margin-bottom: 0.45rem;
+    }
+
+    .end-time-preview {
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.3rem;
+    }
+
+    .task-box {
+      margin-bottom: 1.5rem;
+    }
+
+    .task-input {
+      width: 100%;
+      padding: 0.75rem 1rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-family: inherit;
+      font-size: 0.9rem;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s ease;
+    }
+
+    .task-input::placeholder {
+      color: var(--text-secondary);
+    }
+
+    .task-input:focus {
+      border-color: var(--accent);
+    }
+
+    .controls {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.85rem;
+      margin-bottom: 1.75rem;
+    }
+
+    .primary-btn {
+      flex: 1;
+      max-width: 180px;
+      padding: 0.9rem 1.5rem;
+      border-radius: 14px;
+      border: none;
+      background-color: var(--accent);
+      color: #ffffff;
+      font-family: inherit;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.1s ease, background-color 0.2s ease;
+    }
+
+    .primary-btn:hover {
+      background-color: var(--accent-hover);
+    }
+
+    .primary-btn:active {
+      transform: scale(0.98);
+    }
+
+    .secondary-btn {
+      padding: 0.9rem 1.15rem;
+      border-radius: 14px;
+      border: 1px solid var(--border-color);
+      background-color: transparent;
+      color: var(--text-secondary);
+      font-family: inherit;
+      font-size: 0.95rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .secondary-btn:hover {
+      color: var(--text-primary);
+      border-color: var(--text-secondary);
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 1.15rem;
+      border-top: 1px solid var(--border-color);
+      font-size: 0.82rem;
+      color: var(--text-secondary);
+    }
+
+    .session-badge {
+      background-color: var(--accent-soft);
+      color: var(--accent);
+      padding: 0.25rem 0.65rem;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+
+    .kbd-hint {
+      font-size: 0.75rem;
+    }
+
+    kbd {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 5px;
+      padding: 0.1rem 0.35rem;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.7rem;
+    }
+  </style>
+</head>
+<body>
+  <main class="app-container">
+    <header>
+      <div class="brand">
+        <span class="brand-dot"></span>
+        <span>AuraFocus</span>
+      </div>
+      <div class="header-controls">
+        <button id="soundToggle" class="icon-btn" title="Toggle Chime Sound" aria-label="Toggle Sound">
+          <svg id="soundIconOn" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><path d="M15.54 8.46a5 5 0 0 1 0 7.07"></path><path d="M19.07 4.93a10 10 0 0 1 0 14.14"></path></svg>
+          <svg id="soundIconOff" style="display:none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5"></polygon><line x1="23" y1="9" x2="17" y2="15"></line><line x1="17" y1="9" x2="23" y2="15"></line></svg>
+        </button>
+        <button id="themeToggle" class="icon-btn" title="Toggle Light/Dark Mode" aria-label="Toggle Theme">
+          <svg id="moonIcon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"></path></svg>
+          <svg id="sunIcon" style="display:none" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="5"></circle><line x1="12" y1="1" x2="12" y2="3"></line><line x1="12" y1="21" x2="12" y2="23"></line><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"></line><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"></line><line x1="1" y1="12" x2="3" y2="12"></line><line x1="21" y1="12" x2="23" y2="12"></line><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"></line><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"></line></svg>
+        </button>
+      </div>
+    </header>
+
+    <div class="mode-tabs" role="tablist">
+      <button class="mode-btn active" data-mode="pomodoro" data-minutes="25">Pomodoro</button>
+      <button class="mode-btn" data-mode="short" data-minutes="5">Short Break</button>
+      <button class="mode-btn" data-mode="long" data-minutes="15">Long Break</button>
+      <button class="mode-btn" data-mode="custom" data-minutes="45">Custom</button>
+    </div>
+
+    <div id="customRow" class="custom-input-row">
+      <input type="number" id="customMinutesInput" min="1" max="180" value="45" aria-label="Custom minutes" />
+      <span style="font-size: 0.85rem; color: var(--text-secondary);">min</span>
+      <button id="setCustomBtn">Set</button>
+    </div>
+
+    <div class="timer-wrapper">
+      <svg class="progress-ring" width="250" height="250">
+        <circle class="progress-ring__track" stroke-width="8" fill="transparent" r="115" cx="125" cy="125" />
+        <circle id="progressCircle" class="progress-ring__circle" stroke-width="8" fill="transparent" r="115" cx="125" cy="125" />
+      </svg>
+      <div class="timer-center">
+        <div id="timeDisplay" class="time-display">25:00</div>
+        <div id="endTimePreview" class="end-time-preview">Ends at --:--</div>
+      </div>
+    </div>
+
+    <div class="task-box">
+      <input type="text" id="focusGoal" class="task-input" placeholder="What are you focusing on?" maxlength="60" />
+    </div>
+
+    <div class="controls">
+      <button id="startPauseBtn" class="primary-btn">Start</button>
+      <button id="resetBtn" class="secondary-btn">Reset</button>
+    </div>
+
+    <footer>
+      <div>Completed: <span id="sessionCount" class="session-badge">0</span></div>
+      <div class="kbd-hint">Press <kbd>Space</kbd> to start/pause</div>
+    </footer>
+  </main>
+
+  <script>
+    const timeDisplay = document.getElementById('timeDisplay');
+    const endTimePreview = document.getElementById('endTimePreview');
+    const startPauseBtn = document.getElementById('startPauseBtn');
+    const resetBtn = document.getElementById('resetBtn');
+    const modeBtns = document.querySelectorAll('.mode-btn');
+    const customRow = document.getElementById('customRow');
+    const customMinutesInput = document.getElementById('customMinutesInput');
+    const setCustomBtn = document.getElementById('setCustomBtn');
+    const sessionCountEl = document.getElementById('sessionCount');
+    const themeToggle = document.getElementById('themeToggle');
+    const soundToggle = document.getElementById('soundToggle');
+    const progressCircle = document.getElementById('progressCircle');
+
+    const radius = 115;
+    const circumference = 2 * Math.PI * radius;
+    progressCircle.style.strokeDasharray = `${circumference} ${circumference}`;
+    progressCircle.style.strokeDashoffset = 0;
+
+    let currentMode = 'pomodoro';
+    let totalSeconds = 25 * 60;
+    let remainingSeconds = totalSeconds;
+    let timerInterval = null;
+    let isRunning = false;
+    let completedSessions = 0;
+    let soundEnabled = true;
+
+    function playChime() {
+      if (!soundEnabled) return;
+      try {
+        const AudioCtx = window.AudioContext || window.webkitAudioContext;
+        const ctx = new AudioCtx();
+        const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+        notes.forEach((freq, idx) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.type = 'sine';
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + idx * 0.14);
+          gain.gain.setValueAtTime(0.001, ctx.currentTime + idx * 0.14);
+          gain.gain.exponentialRampToValueAtTime(0.12, ctx.currentTime + idx * 0.14 + 0.05);
+          gain.gain.exponentialRampToValueAtTime(0.0001, ctx.currentTime + idx * 0.14 + 1.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + idx * 0.14);
+          osc.stop(ctx.currentTime + idx * 0.14 + 1.5);
+        });
+      } catch (e) {
+        console.warn('Web Audio API unavailable:', e);
+      }
+    }
+
+    function formatTime(secs) {
+      const mins = Math.floor(secs / 60);
+      const remSecs = secs % 60;
+      return `${String(mins).padStart(2, '0')}:${String(remSecs).padStart(2, '0')}`;
+    }
+
+    function updateEndTimePreview() {
+      const now = new Date();
+      const end = new Date(now.getTime() + remainingSeconds * 1000);
+      const formatted = end.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      endTimePreview.textContent = `Ends at ${formatted}`;
+    }
+
+    function updateDisplay() {
+      const formatted = formatTime(remainingSeconds);
+      timeDisplay.textContent = formatted;
+      document.title = isRunning ? `${formatted} — AuraFocus` : 'AuraFocus — Study Timer Clock';
+
+      const progress = totalSeconds > 0 ? remainingSeconds / totalSeconds : 0;
+      const offset = circumference - progress * circumference;
+      progressCircle.style.strokeDashoffset = offset;
+      updateEndTimePreview();
+    }
+
+    function setDuration(minutes) {
+      pauseTimer();
+      totalSeconds = Math.max(1, Math.min(180, minutes)) * 60;
+      remainingSeconds = totalSeconds;
+      updateDisplay();
+    }
+
+    function startTimer() {
+      if (isRunning) return;
+      if (remainingSeconds <= 0) {
+        remainingSeconds = totalSeconds;
+      }
+      isRunning = true;
+      startPauseBtn.textContent = 'Pause';
+      const targetTime = Date.now() + remainingSeconds * 1000;
+
+      timerInterval = setInterval(() => {
+        const diff = Math.round((targetTime - Date.now()) / 1000);
+        remainingSeconds = Math.max(0, diff);
+        updateDisplay();
+
+        if (remainingSeconds <= 0) {
+          pauseTimer();
+          playChime();
+          if (currentMode === 'pomodoro' || currentMode === 'custom') {
+            completedSessions++;
+            sessionCountEl.textContent = completedSessions;
+          }
+          startPauseBtn.textContent = 'Start';
+        }
+      }, 250);
+    }
+
+    function pauseTimer() {
+      isRunning = false;
+      clearInterval(timerInterval);
+      timerInterval = null;
+      startPauseBtn.textContent = 'Start';
+      updateDisplay();
+    }
+
+    startPauseBtn.addEventListener('click', () => {
+      if (isRunning) {
+        pauseTimer();
+      } else {
+        startTimer();
+      }
+    });
+
+    resetBtn.addEventListener('click', () => {
+      pauseTimer();
+      remainingSeconds = totalSeconds;
+      updateDisplay();
+    });
+
+    modeBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        modeBtns.forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentMode = btn.dataset.mode;
+
+        if (currentMode === 'custom') {
+          customRow.classList.add('visible');
+          setDuration(parseInt(customMinutesInput.value, 10) || 45);
+        } else {
+          customRow.classList.remove('visible');
+          setDuration(parseInt(btn.dataset.minutes, 10));
+        }
+      });
+    });
+
+    setCustomBtn.addEventListener('click', () => {
+      const val = parseInt(customMinutesInput.value, 10);
+      if (!isNaN(val) && val >= 1 && val <= 180) {
+        setDuration(val);
+      }
+    });
+
+    themeToggle.addEventListener('click', () => {
+      const root = document.documentElement;
+      const isDark = root.getAttribute('data-theme') === 'dark';
+      root.setAttribute('data-theme', isDark ? 'light' : 'dark');
+      document.getElementById('moonIcon').style.display = isDark ? 'block' : 'none';
+      document.getElementById('sunIcon').style.display = isDark ? 'none' : 'block';
+    });
+
+    soundToggle.addEventListener('click', () => {
+      soundEnabled = !soundEnabled;
+      document.getElementById('soundIconOn').style.display = soundEnabled ? 'block' : 'none';
+      document.getElementById('soundIconOff').style.display = soundEnabled ? 'none' : 'block';
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.code === 'Space' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        isRunning ? pauseTimer() : startTimer();
+      }
+    });
+
+    setInterval(() => {
+      if (!isRunning) updateEndTimePreview();
+    }, 15000);
+
+    updateDisplay();
+  </script>
+</body>
+</html>
